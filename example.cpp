@@ -3,6 +3,7 @@
 #include <functional>
 #include <cmath>
 #include "Matrix.h"
+#include "nn.h"
 
 using namespace std;
 
@@ -11,7 +12,6 @@ int main(int argc, char *argv[])
     Matrix<double> matrix1(3, 2), matrix2(2, 2);
     // cout << matrix.getSize() << endl;
     matrix1.randomize();
-    matrix2.randomize();
     matrix1.print();
     // matrix2.print();
     cout << '\n';
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     Matrix<double> matrix3 = matrix1.copy();
     // matrix3.print();
     // matrix3.transpose();
-    matrix3.map(ayy);
+    matrix3.map(sigmoid);
     matrix3.print();
     // matrix3 = matrix1.copy();
 

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <iterator>
 #include <iostream>
@@ -22,6 +24,7 @@ class Matrix
         : mRows(rows), mColumns(columns), mSize(columns * rows)
     {
         mData.reserve(mSize);
+        mData.resize(mSize);
     }
 
     Matrix(const size_t &rows, const size_t &columns, const std::vector<T> &Data)
@@ -59,11 +62,11 @@ class Matrix
     {
         std::random_device r;
         std::seed_seq seed2{r(), r(), r(), r(), r(), r(), r(), r()};
-        std::mt19937 e2(seed2);
-        std::normal_distribution<> normal_dist(5, 3.24);
+        std::mt19937_64 e2(seed2);
+        std::uniform_real_distribution<> dist(0, 1);
         for (int i = 0; i < mSize; i++)
         {
-            mData.push_back(normal_dist(e2));
+            mData.push_back(dist(e2));
             // x = normal_dist(e2);
         }
     }
@@ -94,13 +97,13 @@ class Matrix
 
     void transpose()
     {
-        Matrix<T> temp(mColumns, mRows);
+        // Matrix<T> temp(mColumns, mRows);
         std::vector<T> tempv;
         for (int i = 0; i < mColumns; i++)
         {
             for (int j = 0; j < mRows; j++)
             {
-                temp.insert((*this)(j, i));
+                // temp.insert((*this)(j, i));
                 tempv.push_back((*this)(j, i));
             }
         }
@@ -110,7 +113,7 @@ class Matrix
         mData = tempv;
     }
 
-    void map(std::function<T(T)> &f)
+    void map(std::function<T(T &)> &f)
     {
         for (auto &data : mData)
         {
@@ -134,6 +137,25 @@ class Matrix
         {
             x *= val;
         }
+    }
+
+    Matrix multiply(const Matrix &a, const Matrix &b)
+    {
+        T sum = 0;
+        Matrix<T> result(a.rows(), b.columns());
+        for (int i = 0; i < a.rows(); i++)
+        {
+            for (int j = 0; j < b.columns(); j++)
+            {
+                for (int k = 0; k < a.columns(); k++)
+                {
+                    sum = a(i, k) + b(k, j);
+                    // result(i, j) += a(i, k) + b(k, j);
+                }
+                result(i, j) = sum;
+            }
+        }
+        return result;
     }
 
     std::vector<T> getData()
@@ -174,7 +196,7 @@ class Matrix
         return mData.at(i);
     }
 
-    T operator()(int i, int j) const
+    T operator()(size_t i, size_t j) const
     {
         // return mData[i*mRows + j];
         return mData.at(j + i * mColumns);
@@ -199,16 +221,25 @@ class Matrix
         return *this;
     }
 
-    // Matrix operator+(const Matrix &x)
-    // {
-    //     if (mSize != x.getSize())
-    //     {
-    //         std::cout << "Wrong Matrix size!"
-    //                   << "\n";
-    //         return *this;
-    //     }
-    //     // std::vector<T> new_vec = this->mData + x.getData();
+    Matrix &operator+=(Matrix &x)
+    {
 
-    //     return Matrix<T>(mRows, mColumns, mData);
-    // }
+        std::transform(mData.begin(), mData.end(), x.mData.begin(), mData.begin(), std::plus<T>());
+
+        return *this;
+    }
+
+    Matrix &operator+(const Matrix &x)
+    {
+        if (mSize != x.getSize())
+        {
+            std::cout << "Wrong Matrix size!"
+                      << "\n";
+            return *this;
+        }
+        // std::vector<T> new_vec = this->mData + x.getData();
+        std::transform(mData.begin(), mData.end(), x.mData.begin(), mData.begin(), std::plus<T>());
+
+        return Matrix<T>(mRows, mColumns, mData);
+    }
 };
