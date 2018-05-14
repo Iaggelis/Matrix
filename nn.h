@@ -5,6 +5,7 @@
 #include <functional>
 #include "Matrix.h"
 
+
 std::function<double(double &)> sigmoid = [&](double &x) { return 1 / (1 + std::exp(-x)); };
 std::function<double(double &)> dsigmoid = [&](double &x) { return 1 - (1 - x); };
 

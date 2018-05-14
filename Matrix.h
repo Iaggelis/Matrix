@@ -24,7 +24,7 @@ class Matrix
         : mRows(rows), mColumns(columns), mSize(columns * rows)
     {
         mData.reserve(mSize);
-        mData.resize(mSize);
+        // mData.resize(mSize);
     }
 
     Matrix(const size_t &rows, const size_t &columns, const std::vector<T> &Data)
@@ -41,13 +41,13 @@ class Matrix
         mData = m.mData;
     }
 
-    // Matrix(Matrix &&m) noexcept
-    //     : mRows(m.rows),
-    //       mColumns(m.columns)
-    // {
-    //     mSize = mRows * mColumns;
-    //     mData = m.getData();
-    // }
+    Matrix(Matrix &&m) noexcept
+        : mRows(m.rows()),
+          mColumns(m.columns())
+    {
+        mSize = mRows * mColumns;
+        mData = m.getData();
+    }
 
     ~Matrix() noexcept
     {
@@ -63,7 +63,7 @@ class Matrix
         std::random_device r;
         std::seed_seq seed2{r(), r(), r(), r(), r(), r(), r(), r()};
         std::mt19937_64 e2(seed2);
-        std::uniform_real_distribution<> dist(0, 1);
+        std::uniform_real_distribution<double> dist(0, 2);
         for (int i = 0; i < mSize; i++)
         {
             mData.push_back(dist(e2));
@@ -74,6 +74,11 @@ class Matrix
     void insert(const T &val)
     {
         mData.push_back(val);
+    }
+
+    void resize(const size_t &s)
+    {
+        mData.resize(s);
     }
 
     void add(const T &val)
@@ -141,18 +146,34 @@ class Matrix
 
     Matrix multiply(const Matrix &a, const Matrix &b)
     {
-        T sum = 0;
-        Matrix<T> result(a.rows(), b.columns());
+
+        Matrix<T> result(a.mRows, b.mColumns);
+        result.resize(a.mRows * b.mColumns);
         for (int i = 0; i < a.rows(); i++)
         {
             for (int j = 0; j < b.columns(); j++)
             {
                 for (int k = 0; k < a.columns(); k++)
                 {
-                    sum = a(i, k) + b(k, j);
-                    // result(i, j) += a(i, k) + b(k, j);
+                    result(i, j) += a(i, k) * b(k, j);
                 }
-                result(i, j) = sum;
+            }
+        }
+        return result;
+    }
+
+    Matrix multiply(Matrix b)
+    {
+        Matrix<T> result(this->rows(), b.columns());
+        result.resize(this->rows() * b.columns());
+        for (int i = 0; i < this->rows(); i++)
+        {
+            for (int j = 0; j < b.columns(); j++)
+            {
+                for (int k = 0; k < this->columns(); k++)
+                {
+                    result(i, j) += (*this)(i, k) * b(k, j);
+                }
             }
         }
         return result;
@@ -196,10 +217,21 @@ class Matrix
         return mData.at(i);
     }
 
-    T operator()(size_t i, size_t j) const
+    T &operator()(size_t i, size_t j)
     {
         // return mData[i*mRows + j];
         return mData.at(j + i * mColumns);
+    }
+
+    const T &operator()(size_t i, size_t j) const
+    {
+        // return mData[i*mRows + j];
+        return mData.at(j + i * mColumns);
+    }
+
+    void operator=(Matrix<T> &&other)
+    {
+        mData = std::move(other.mData);
     }
 
     Matrix &operator=(const Matrix &x)
