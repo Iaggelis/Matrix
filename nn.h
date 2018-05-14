@@ -5,7 +5,6 @@
 #include <functional>
 #include "Matrix.h"
 
-
 std::function<double(double &)> sigmoid = [&](double &x) { return 1 / (1 + std::exp(-x)); };
 std::function<double(double &)> dsigmoid = [&](double &x) { return 1 - (1 - x); };
 
@@ -37,6 +36,11 @@ class NeuralNetwork
         functions.emplace_back(sigmoid, dsigmoid);
         functions.emplace_back(mytanh, dtanh);
 
+        bias_h = Matrix<double>(hidden_nodes, 1);
+        bias_o = Matrix<double>(output_nodes, 1);
+        bias_h.randomize();
+        bias_o.randomize();
+
         setLearningRate();
         setActivationFunction(functions[0]);
     }
@@ -51,8 +55,39 @@ class NeuralNetwork
         learning_rate = lrate;
     }
 
-    Matrix<double> predict(Matrix<double> &input_array) {
+    Matrix<double> predict(Matrix<double> &input_array)
+    {
         inputs = input_array;
-        hidden = Matrix<double>().multiply(weights_ih,inputs);
+        hidden = Matrix<double>().multiply(weights_ih, inputs);
+        hidden.add(bias_h);
+        hidden.map(activation_function.first);
+
+        output = Matrix<double>().multiply(weights_ho, hidden);
+        output.add(bias_o);
+        output.map(activation_function.first);
+
+        return output;
+    }
+
+    void train(Matrix<double> &input_array, Matrix<double> &target_array)
+    {
+        inputs = input_array;
+        hidden = Matrix<double>().multiply(weights_ih, inputs);
+        hidden.add(bias_h);
+        hidden.map(activation_function.first);
+
+        output = Matrix<double>().multiply(weights_ho, hidden);
+        output.add(bias_o);
+        output.map(activation_function.first);
+
+        Matrix<double> targets, output_errors, gradients;
+        targets = target_array;
+
+        output_errors = Matrix<double>().subtrack(targets, output);
+
+        ///
+
+        gradients.multiply(output_errors);
+        gradients.multiply(learning_rate);
     }
 };

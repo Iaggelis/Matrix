@@ -100,6 +100,14 @@ class Matrix
         std::transform(mData.begin(), mData.end(), m.mData.begin(), mData.begin(), std::minus<T>());
     }
 
+    Matrix<T> subtrack(const Matrix &a, const Matrix &b)
+    {
+        Matrix<T> result(a.mRows, a.mColumns);
+        result.resize(a.mRows * a.mColumns);
+        std::transform(a.mData.begin(), a.mData.end(), b.mData.begin(), result.mData.begin(), std::minus<T>());
+        return result;
+    }
+
     void transpose()
     {
         // Matrix<T> temp(mColumns, mRows);
@@ -126,10 +134,10 @@ class Matrix
         }
     }
 
-    Matrix addMatrix(Matrix &m)
-    {
-        return Matrix(4, 4, (mData));
-    }
+    // Matrix addMatrix(Matrix &m)
+    // {
+    //     return Matrix(4, 4, (mData));
+    // }
 
     Matrix copy()
     {
