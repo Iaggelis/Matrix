@@ -63,7 +63,7 @@ public:
         std::random_device r;
         std::seed_seq seed2{r(), r(), r(), r(), r(), r(), r(), r()};
         std::mt19937_64 e2(seed2);
-        if (is_same<T, int>::value)
+        if (std::is_same<T, int>::value)
         {
             std::uniform_int_distribution<> dist(0, 1);
             for (int i = 0; i < mSize; i++)
@@ -138,7 +138,6 @@ public:
         else
         {
             return std::numeric_limits<T>::quiet_NaN();
-            ;
         }
     }
     void transpose()
@@ -151,7 +150,7 @@ public:
                 tempv.push_back((*this)(j, i));
             }
         }
-        swap(mColumns, mRows);
+        std::swap(mColumns, mRows);
         mData.clear();
         mData = tempv;
     }
@@ -163,7 +162,7 @@ public:
         return temp;
     }
 
-    void map(function<T(T &)> &f)
+    void map(std::function<T(T &)> &f)
     {
         for (auto &data : mData)
         {
@@ -171,7 +170,7 @@ public:
         }
     }
 
-    Matrix map(const Matrix &m, function<T(T &)> &f)
+    Matrix map(const Matrix &m, std::function<T(T &)> &f)
     {
         Matrix<T> result(m.rows(), m.columns());
         result.resize(m.rows() * m.columns());
@@ -220,7 +219,7 @@ public:
         return result;
     }
 
-    Matrix multiply(Matrix b)
+    Matrix multiply(const Matrix &b)
     {
         Matrix<T> result(this->rows(), b.columns());
         result.resize(this->rows() * b.columns());
@@ -237,7 +236,7 @@ public:
         return result;
     }
 
-    void fromVector(vector<T> &vec)
+    void fromVector(const std::vector<T> &vec)
     {
         mRows = vec.size();
         mColumns = 1;
@@ -245,7 +244,7 @@ public:
         mData = vec;
     }
 
-    std::vector<T> getData()
+    std::vector<T> getData() const
     {
         return mData;
     }
@@ -256,11 +255,11 @@ public:
         {
             for (int j = 0; j < mColumns; j++)
             {
-                cout << setw(11) << (*this)(i, j) << setw(11);
+                std::cout << std::setw(11) << (*this)(i, j) << std::setw(11);
             }
-            cout << "\n";
+            std::cout << '\n';
         }
-        cout << "------------------------------------------------------------------------------ \n";
+        std::cout << "------------------------------------------------------------------------------ \n";
     }
 
     size_t rows() const
@@ -294,7 +293,7 @@ public:
 
     void operator=(Matrix<T> &&other)
     {
-        mData = move(other.mData);
+        mData = std::move(other.mData);
     }
 
     Matrix operator=(const Matrix &x)
@@ -315,7 +314,7 @@ public:
     Matrix &operator+=(Matrix &x)
     {
 
-        transform(mData.begin(), mData.end(), x.mData.begin(), mData.begin(), plus<T>());
+        std::transform(mData.begin(), mData.end(), x.mData.begin(), mData.begin(), std::plus<T>());
 
         return *this;
     }
@@ -324,12 +323,51 @@ public:
     {
         if (mSize != x.getSize())
         {
-            cout << "Wrong Matrix size!"
-                 << "\n";
+            std::cout << "Wrong Matrix size!"
+                      << '\n';
             return *this;
         }
-        transform(mData.begin(), mData.end(), x.mData.begin(), mData.begin(), plus<T>());
+        std::transform(mData.begin(), mData.end(), x.mData.begin(), mData.begin(), std::plus<T>());
 
         return Matrix<T>(mRows, mColumns, mData);
+    }
+
+    void gaussianEllimination(Matrix &mt)
+    {
+        int rows = mt.rows(), cols = mt.columns();
+        for (int i = 0; i < rows - 1; i++)
+        {
+            int pivot = i;
+
+            for (int j = i + 1; j < rows; j++)
+            {
+                if (fabs(mt(j, i)) > fabs(mt(pivot, i)))
+                    pivot = j;
+            }
+            if (mt(pivot, i) == 0)
+            {
+                continue; //But continuing to simplify the matrix as much as possible
+            }
+
+            if (i != pivot) // Swapping the rows if new row with higher maxVals is found
+            {
+                std::swap(mt(pivot, 0), mt(i, 0)); // C++ swap function
+                // auto temp = mt[pivot];
+                // mt(pivot, 0) = mt(i, 0);
+                // mt(i, 0) = temp;
+            }
+
+            for (int j = i + 1; j < rows; j++)
+            {
+                double scale = mt(j, i) / mt(i, i);
+
+                for (int k = i + 1; k < cols; k++) // k doesn't start at 0, since
+                {
+                    mt(j, k) -= scale * mt(i, k); // values before from 0 to i
+                    // are already 0
+                }
+                mt(j, i) = 0.0;
+            }
+        }
     }
 };
